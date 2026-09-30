@@ -5057,3 +5057,34 @@ body {
     gap: .8rem;
   }
 }
+
+/* GreenReach parcel-scale urban green intelligence */
+.parcel-green-intelligence {
+  margin: 1rem 0;
+  padding: .9rem;
+  border: 1px solid rgba(102, 154, 92, .38);
+  border-radius: .7rem;
+  background: linear-gradient(180deg, rgba(75, 135, 73, .11), rgba(255,255,255,.02));
+}
+.parcel-green-intelligence h3 { margin: .2rem 0 .7rem; }
+.parcel-green-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .5rem;
+}
+.parcel-green-grid div {
+  display: grid;
+  gap: .14rem;
+  padding: .58rem;
+  border: 1px solid rgba(120, 150, 110, .24);
+  border-radius: .45rem;
+  background: rgba(255,255,255,.04);
+}
+.parcel-green-grid span {
+  font-size: .7rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  opacity: .74;
+}
+.parcel-green-grid strong { font-size: 1.18rem; }
+.parcel-green-grid small { line-height: 1.25; opacity: .7; }

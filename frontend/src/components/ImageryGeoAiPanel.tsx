@@ -277,8 +277,8 @@ export function ImageryGeoAiPanel({
       {fullscreenHost && fullscreenActions ? createPortal(fullscreenActions, fullscreenHost) : null}
       {fullscreenComposition}
       <section className="imagery-panel" aria-label="Imagery and GeoAI controls">
-      <p className="eyebrow">Imagery, buildings, roads, land-use and parcel intelligence</p>
-      <h2>Registered GeoTIFFs</h2>
+      <p className="eyebrow">GreenReach imagery & GeoAI pipeline</p>
+      <h2>GeoTIFF → Buildings → Roads → Land use → Parcels</h2>
 
       {canUpload && (
         <label className="imagery-upload">
@@ -424,7 +424,7 @@ export function ImageryGeoAiPanel({
 
       {selected?.metadata.registration_status === "READY" && hasPrivateFile && canProcess && !landUseHasFourBands && (
         <p className="panel-note">
-          Land-use GeoAI requires approximately 10 m, four-band RGB+NIR imagery. Building and road GeoAI remain available for this imagery.
+          SegFormer land-use GeoAI requires approximately 10 m, four-band RGB+NIR imagery. Building and road GeoAI remain available for this imagery.
         </p>
       )}
 
@@ -448,8 +448,7 @@ export function ImageryGeoAiPanel({
       )}
 
       <p className="panel-note">
-        Original imagery remains private. The map uses a time-limited derived
-        preview. Building footprints, road vectors, land-use classes, and generated plot candidates are AI preliminary. Plot candidates must be verified against cadastral/FMB or survey evidence before legal use.
+        Original imagery remains private. The map uses a time-limited derived preview. Building footprints, road vectors, land-use classes, and generated parcel candidates are AI preliminary. GreenReach uses these outputs for urban-green screening; they are not legal cadastral determinations.
       </p>
       </section>
     </>

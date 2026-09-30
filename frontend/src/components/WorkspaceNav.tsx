@@ -28,8 +28,8 @@ export function WorkspaceNav() {
   const primary: NavItem[] = projectId
     ? [
         { label: "Dashboard", path: base, note: "Project overview" },
-        { label: "Documents", path: `${base}/documents`, note: "OCR & records" },
-        { label: "WebGIS", path: `${base}/gis`, note: "Maps & GeoAI" },
+        { label: "Planning Docs", path: `${base}/documents`, note: "OCR & planning evidence" },
+        { label: "Urban Green GIS", path: `${base}/gis`, note: "GeoTIFF, GeoAI & parcel green metrics" },
         { label: "Review", path: `${base}/review`, note: "Human verification" },
       ]
     : [];
@@ -46,10 +46,10 @@ export function WorkspaceNav() {
 
   return (
     <>
-      <header className="workspace-nav" aria-label="Bhumi-AI navigation">
-        <Link className="workspace-wordmark" to="/" aria-label="Bhumi-AI home">
+      <header className="workspace-nav" aria-label="GreenReach navigation">
+        <Link className="workspace-wordmark" to="/" aria-label="GreenReach home">
           <span className="workspace-earth" aria-hidden="true" />
-          <span>Bhumi-AI</span>
+          <span>GreenReach</span>
         </Link>
 
         <div className="workspace-dock">
@@ -106,7 +106,7 @@ export function WorkspaceNav() {
         </div>
 
         <div className="workspace-nav-end">
-          {projectId ? <Link to="/">Projects</Link> : <span className="workspace-mode">Land intelligence</span>}
+          {projectId ? <Link to="/">Projects</Link> : <span className="workspace-mode">Urban green intelligence</span>}
         </div>
       </header>
       {toolsOpen && <button className="workspace-scrim" type="button" aria-label="Close navigation menu" onClick={() => setToolsOpen(false)} />}

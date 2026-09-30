@@ -92,15 +92,15 @@ export function DashboardPage() {
   return <main className="dashboard-shell">
     <header className="dashboard-header dashboard-hero">
       <div className="dashboard-title-block">
-        <p className="eyebrow">Land intelligence workspace</p>
+        <p className="eyebrow">GreenReach · Urban green intelligence workspace</p>
         <div className="dashboard-title-line">
           <h1>{data.project.name}</h1>
           <div className="dashboard-badges" aria-label="Project status"><span>{data.project.state}</span><span>{data.project_role}</span></div>
         </div>
-        <p>{data.project.description || "Document intelligence and geospatial analysis in one auditable workspace."}</p>
+        <p>{data.project.description || "Satellite, GeoAI, parcel-level greenery, public-green accessibility, and planning-document evidence in one decision-support workspace."}</p>
         <div className="dashboard-hero-actions">
-          {canDocuments && <Link to={`/projects/${projectId}/documents`}>Add document</Link>}
-          {canGis && <Link to={`/projects/${projectId}/gis`}>Open map</Link>}
+          {canDocuments && <Link to={`/projects/${projectId}/documents`}>Add planning document</Link>}
+          {canGis && <Link to={`/projects/${projectId}/gis`}>Open Urban Green GIS</Link>}
           {canReview && data.reviews.open > 0 && <Link to={`/projects/${projectId}/review`}>{data.reviews.open} reviews open</Link>}
         </div>
       </div>
@@ -128,8 +128,8 @@ export function DashboardPage() {
 
       <nav className="dashboard-nav" aria-label="Project workspace navigation">
         <Link to="/">Home</Link>
-        {canDocuments && <Link to={`/projects/${projectId}/documents`}>Documents</Link>}
-        {canGis && <Link to={`/projects/${projectId}/gis`}>Web-GIS</Link>}
+        {canDocuments && <Link to={`/projects/${projectId}/documents`}>Planning OCR</Link>}
+        {canGis && <Link to={`/projects/${projectId}/gis`}>Urban Green GIS</Link>}
         {canReview && <Link to={`/projects/${projectId}/review`}>Review workspace</Link>}
         {canProjectRead && <Link to={`/projects/${projectId}/search`}>Search</Link>}
         {canProjectRead && <Link to={`/projects/${projectId}/jobs`}>Jobs</Link>}
@@ -143,14 +143,14 @@ export function DashboardPage() {
       {canDocuments && <Link className="dashboard-launch-card" to={`/projects/${projectId}/documents`}>
         <span className="dashboard-launch-index">01</span>
         <span className="dashboard-workflow-icon"><WorkflowIcon kind="document" /></span>
-        <div><p className="eyebrow">Document intelligence</p><h2>OCR & land records</h2><p>Upload source records, inspect OCR evidence, structured fields, confidence, and provenance.</p></div>
-        <strong>Open Document AI <span aria-hidden="true">→</span></strong>
+        <div><p className="eyebrow">Planning document intelligence</p><h2>OCR & planning evidence</h2><p>Upload municipal plans, ward reports or green-space inventories and inspect OCR evidence, extracted fields, confidence, and provenance.</p></div>
+        <strong>Open Planning OCR <span aria-hidden="true">→</span></strong>
       </Link>}
       {canGis && <Link className="dashboard-launch-card" to={`/projects/${projectId}/gis`}>
         <span className="dashboard-launch-index">02</span>
         <span className="dashboard-workflow-icon"><WorkflowIcon kind="map" /></span>
-        <div><p className="eyebrow">Spatial intelligence</p><h2>Web-GIS & GeoAI</h2><p>Inspect imagery, buildings, roads, preliminary parcel candidates, and visible-boundary evidence.</p></div>
-        <strong>Open Web-GIS <span aria-hidden="true">→</span></strong>
+        <div><p className="eyebrow">Urban green spatial intelligence</p><h2>GeoTIFF & GeoAI WebGIS</h2><p>Upload imagery, run building, road, SegFormer land-use and parcel models, then inspect greenery and built-up proportions per parcel.</p></div>
+        <strong>Open Urban Green GIS <span aria-hidden="true">→</span></strong>
       </Link>}
       {canReview && <Link className="dashboard-launch-card dashboard-launch-card-secondary" to={`/projects/${projectId}/review`}>
         <span className="dashboard-launch-index">03</span>
@@ -186,7 +186,7 @@ export function DashboardPage() {
     <section className="dashboard-operations" aria-label="Operational overview">
       <article className="dashboard-module dashboard-module-document">
         <div className="dashboard-module-head">
-          <div><p className="eyebrow">SIH18 · Document AI</p><h2>Record intelligence</h2></div>
+          <div><p className="eyebrow">Planning evidence · OCR</p><h2>Municipal document intelligence</h2></div>
           {canDocuments && <Link to={`/projects/${projectId}/documents`} aria-label="Open documents">→</Link>}
         </div>
         <div className="dashboard-progress-block">
@@ -199,7 +199,7 @@ export function DashboardPage() {
 
       <article className="dashboard-module dashboard-module-spatial">
         <div className="dashboard-module-head">
-          <div><p className="eyebrow">SIH12 · GIS / GeoAI</p><h2>Spatial inventory</h2></div>
+          <div><p className="eyebrow">Urban Green · GIS / GeoAI</p><h2>Spatial model inventory</h2></div>
           {canGis && <Link to={`/projects/${projectId}/gis`} aria-label="Open Web-GIS">→</Link>}
         </div>
         <div className="dashboard-data-table">

@@ -67,18 +67,18 @@ export function HomePage() {
   return <main className="home-shell">
     <header className="home-hero">
       <div>
-        <h1>Bhumi-AI</h1>
-        <p>Professional land-record intelligence with two focused capabilities: document OCR and evidence extraction, plus Web-GIS and GeoAI analysis.</p>
+        <h1>GreenReach</h1>
+        <p>Urban green accessibility intelligence combining planning-document OCR, GeoTIFF processing, GeoAI land-cover analysis, parcel metrics, and intervention planning.</p>
       </div>
 
     </header>
 
     {!loggedIn && <section className="login-card login-experience" aria-label="Sign in">
-      <aside className="login-visual" aria-label="Bhumi-AI capabilities">
+      <aside className="login-visual" aria-label="GreenReach capabilities">
         <div className="login-visual-copy">
-          <p className="eyebrow">Unified land intelligence</p>
-          <h2>Evidence first.<br />Decisions with context.</h2>
-          <p>One workspace for digitized land records, geospatial evidence, and human review.</p>
+          <p className="eyebrow">Urban green decision intelligence</p>
+          <h2>Map access gaps.<br />Test interventions.</h2>
+          <p>One workspace for satellite imagery, GeoAI land-cover evidence, parcel-scale green metrics, public-green accessibility, and planning-document OCR.</p>
         </div>
 
         <div className="login-map-motif" aria-hidden="true">
@@ -98,9 +98,9 @@ export function HomePage() {
         </div>
 
         <div className="login-capabilities">
-          <span>OCR & extraction</span>
-          <span>WebGIS & GeoAI</span>
-          <span>Audit-ready review</span>
+          <span>Planning OCR</span>
+          <span>GeoTIFF & GeoAI</span>
+          <span>Parcel green intelligence</span>
         </div>
       </aside>
 
@@ -108,7 +108,7 @@ export function HomePage() {
         <div className="login-form-heading">
           <p className="eyebrow">Secure project access</p>
           <h2>Sign in</h2>
-          <p>Continue to your authorized Bhumi-AI workspace.</p>
+          <p>Continue to the GreenReach urban-green planning workspace.</p>
         </div>
         <form onSubmit={(event) => { event.preventDefault(); if (identifier.trim() && password) signIn.mutate(); }}>
           <label>Login ID or email<input aria-label="Login ID or email" autoComplete="username" value={identifier} onChange={(event) => setIdentifier(event.target.value)} /></label>
@@ -158,10 +158,10 @@ export function HomePage() {
       </section>
 
       <section className="home-demo-path">
-        <div><p className="eyebrow">Suggested judging path</p><h2>Two clear demo workflows</h2><p>Keep the live walkthrough focused and easy to follow.</p></div>
+        <div><p className="eyebrow">Suggested judging path</p><h2>From imagery to intervention</h2><p>Keep the live walkthrough focused on measurable urban-green decisions.</p></div>
         <ol>
-          <li><strong>Document AI / OCR</strong><span>Upload the prepared land deed and show OCR evidence, extracted fields, confidence, and provenance.</span></li>
-          <li><strong>Web-GIS / GeoAI</strong><span>Open the prepared imagery and show detected buildings, roads, parcel candidates, and visible-boundary evidence.</span></li>
+          <li><strong>Planning document OCR</strong><span>Upload a planning or municipal document and show OCR evidence, extracted fields, confidence, and provenance.</span></li>
+          <li><strong>Urban Green WebGIS</strong><span>Upload GeoTIFF imagery, run building, road, land-use and parcel models, then inspect parcel greenery and built-up proportions.</span></li>
         </ol>
       </section>
     </>}
