@@ -1,0 +1,116 @@
+# GeoAI Building Polygonization (Phase C.3)
+
+Phase C.3 turns C.2 building masks into preliminary building-footprint polygons. It uses Rasterio's 8-connected component tracing and conservative Shapely cleanup. It does not create parcels, legal boundaries, survey identifiers, or approvals.
+
+## Coordinate Handling
+
+Pass `--source-raster` only when it is the same raster or tile that produced the mask. The command requires exactly matching width and height and refuses to stretch a mask over another raster.
+
+- With a valid source-raster affine transform and CRS, output features are `WORLD` coordinates in that source CRS internally. GeoJSON export transforms world geometries to WGS84 (`EPSG:4326`) and retains the original CRS in `properties.source_crs` and collection metadata.
+- Without both a transform and CRS, output remains `PIXEL` coordinates. It has no invented CRS and `area_m2` and `area_sqft` are `null`.
+
+Projected geometries use their CRS unit conversion to calculate square metres. Geographic geometries use a PyProj geodesic area calculation, never degree-squared. Square feet use `1 m2 = 10.7639104167 sq ft`.
+
+## Use
+
+```powershell
+# C.2 / WHU masks have no georeferencing: output remains PIXEL.
+python -m ai.geoai.cli building-vectorize --mask "<MASK.png>" --output data/processed/geoai/buildings/pixel.geojson --model-version building-segmentation-c2-v1
+
+# A mask produced from this exact GeoTIFF/tile: output is WORLD coordinates.
+python -m ai.geoai.cli building-vectorize --mask data/processed/geoai/buildings/tile_mask.npy --source-raster data/processed/geoai/tiles/example.tif --probability-mask data/processed/geoai/buildings/tile_probability.npy --output data/processed/geoai/buildings/world.geojson --threshold 0.5 --min-area 10 --simplify-tolerance 0.25 --model-version building-segmentation-c2-v1
+```
+
+`--min-area` is in square metres for georeferenced results and pixel-squared units for pixel-space results. `--simplify-tolerance` uses the active coordinate units. Cleanup repairs invalid component geometry and may simplify raster stair-steps, but it does not aggressively rectangularize or merge separate buildings.
+
+Every feature records building class, model confidence, source references, model version, processing time, `AI_PRELIMINARY` status, and `UNVERIFIED` verification status. Probability confidence is the mean probability of component pixels after thresholding. Without a probability mask, confidence is `null` unless a caller supplies it through the Python API.
+
+Generated GeoJSON is written under `data/processed/geoai/` and ignored by Git. Geometry is suitable for later PostGIS loading and topology/review work, but must be checked by an authorized GIS or survey reviewer before publication.
+
+## Debug Overlay
+
+Use the read-only debug overlay to visually inspect C.3 boundaries without altering the source image or GeoJSON:
+
+```powershell
+# PIXEL GeoJSON overlays directly on the matching PNG/JPG image.
+python -m ai.geoai.cli building-visualize --image "<source.png>" --geojson data/processed/geoai/buildings/pixel.geojson --output data/processed/geoai/buildings/pixel-overlay.png --draw-labels
+
+# WORLD GeoJSON requires the matching GeoTIFF. Its GeoJSON coordinates are transformed back through the raster CRS and inverse affine transform before drawing.
+python -m ai.geoai.cli building-visualize --image data/raw/imagery/RGB.byte.tif --source-raster data/raw/imagery/RGB.byte.tif --geojson data/processed/geoai/buildings/world.geojson --output data/processed/geoai/buildings/world-overlay.png
+```
+
+The `WORLD` command fails rather than guessing when `--source-raster`, its CRS/affine transform, or matching raster/image dimensions are unavailable.
+
+## Parcel Acquisition (Phase C.4)
+
+C.4 acquires draft parcel candidates only from declared spatial evidence: cadastral GIS, an already-digitized/georeferenced FMB import, GNSS survey corners, future human-drawn geometry, or a supplied visible-boundary candidate. Building footprints are not parcel boundaries. C.4 does not infer invisible legal/property boundaries from imagery.
+
+```powershell
+# Cadastral or FMB GeoJSON. The source CRS is required when coordinates are world coordinates.
+python -m ai.geoai.cli parcel-create --source-type CADASTRAL_GIS --input "<parcel.geojson>" --source-crs EPSG:32618 --source-reference "cadastral-layer-2026" --output data/processed/geoai/parcels/cadastral-draft.geojson
+
+# Ordered GNSS corners; the input preserves its original point list as provenance.
+python -m ai.geoai.cli parcel-create --source-type GNSS_SURVEY --input "<survey-points.json>" --source-crs EPSG:32618 --source-reference "survey-run-42" --output data/processed/geoai/parcels/gnss-draft.geojson
+
+# No visible imagery evidence deliberately creates a null-geometry, survey-required result.
+python -m ai.geoai.cli parcel-create --source-type AI_VISIBLE_BOUNDARY --input '{"evidence_type":"NO_VISIBLE_EVIDENCE","coordinate_space":"PIXEL"}' --output data/processed/geoai/parcels/not-determined.geojson
+```
+
+World-coordinate output is exported as WGS84 GeoJSON and retains `source_crs`; projected and geographic areas use the same metre-safe and geodesic rules as C.3. `PIXEL`, `LOCAL`, and `UNKNOWN` inputs have null real-world areas. Every result is `DRAFT`/`UNVERIFIED` (or `NOT_DETERMINED` when no boundary can be determined); AI visible evidence also carries `ai_boundary_status: AI_PRELIMINARY` and always requires GIS/survey verification. FMB OCR/georeferencing, imagery boundary inference, legal approval, PostGIS persistence, and Phase D editing remain out of scope.
+
+## Roads and Land Use (Phase C.5)
+
+C.5 creates lightweight, source-backed road/pathway and basic land-use GIS features for later PostGIS and Web-GIS use. It accepts declared `EXISTING_GIS`, `MANUAL_DRAWN`, and `AI_CANDIDATE` sources; it does not train or infer a new road/land-use model. Source geometry and provenance are preserved. All results are `DRAFT`/`UNVERIFIED`; AI candidates additionally carry `AI_PRELIMINARY` and a warning that they are not legal or statutory classifications.
+
+```powershell
+# A projected LineString: its safely calculated length is returned in metres.
+python -m ai.geoai.cli road-create --source-type EXISTING_GIS --road-class ROAD --input "<road.geojson>" --source-crs EPSG:32618 --source-reference "municipal-roads-2026" --output data/processed/geoai/features/road.geojson
+
+# Manual local/pixel coordinates remain local and have null length_m.
+python -m ai.geoai.cli road-create --source-type MANUAL_DRAWN --road-class PATHWAY --input '{"coordinates":[[10,10],[60,10]]}' --output data/processed/geoai/features/pathway.geojson
+
+# UNKNOWN avoids forcing an unsupported class. World-coordinate polygons receive metre-safe areas.
+python -m ai.geoai.cli landuse-create --source-type AI_CANDIDATE --land-use-class UNKNOWN --input "<polygon.geojson>" --source-crs EPSG:32618 --model-version "landuse-candidate-v1" --output data/processed/geoai/features/landuse.geojson
+```
+
+Roads accept `LineString` and, with `road_surface: true` in the JSON input, a polygon road surface. `MultiLineString` and `MultiPolygon` require their explicit CLI opt-in flags. Geographic road length uses PyProj geodesics; projected values use declared CRS units. Geographic land-use area uses a geodesic calculation, never degree-squared. `PIXEL`, `LOCAL`, and `UNKNOWN` coordinate spaces deliberately return null real-world measurements. Road/land-use features are preliminary GIS context, not cadastral boundaries or legal land-use determinations.
+
+## Road GeoAI (H.2B.5)
+
+H.2B.5 adds a separate binary road-segmentation checkpoint and deterministic centerline extraction for registered, CRS-bearing GeoTIFF imagery. It does not reuse the building checkpoint or invent output when `GEOAI_ROAD_CHECKPOINT` is absent. Set that path locally, optionally set `GEOAI_ROAD_THRESHOLD` (default `0.5`), then request `ROAD_VECTORIZE` through the project GeoAI API or Web-GIS imagery panel.
+
+```bash
+python -m ai.geoai.cli road-dataset-check --dataset-root <road-dataset-root> --split train
+python -m ai.geoai.cli road-train --dataset-root <road-dataset-root> --epochs 1 --device auto --checkpoint-directory data/models/roads
+python -m ai.geoai.cli road-evaluate --dataset-root <road-dataset-root> --split val --checkpoint data/models/roads/<run>/best.pt --device auto
+python -m ai.geoai.cli road-infer --checkpoint data/models/roads/best.pt --source <georeferenced.tif> --device auto --threshold 0.5
+```
+
+The portable training-data layout is `<root>/<split>/images/` and `<root>/<split>/labels/`, using paired raster masks or GeoJSON centerlines. GeoJSON labels are rasterized onto the paired imagery grid. Long training is intentionally never started by this repository workflow. Runtime features are persisted as `AI_CANDIDATE`, `AI_PRELIMINARY`, and `UNVERIFIED`; they have no legal road name, statutory right-of-way, or cadastral authority. The MVP centerline derivation is deterministic but can split/merge complex junctions, so human GIS review remains required.
+
+## Parcel Topology and Edit Validation (Phase C.6)
+
+C.6 adds reusable library validation under `ai.geoai.topology`. It conservatively repairs polygonal geometry, detects parcel overlaps, checks optional project-boundary coverage gaps/outside areas, compares a draft parcel with an existing GIS reference, and validates future human-edited parcel geometry from Phase D.
+
+Significant area changes, neighbour overlaps, and project-boundary violations return `REVIEW_REQUIRED` rather than silently accepting or auto-rejecting a legal-boundary change. Invalid edits return `INVALID`. The original geometry is never mutated; C.7 will persist geometry versions and audit/provenance.
+
+```python
+from ai.geoai.topology import validate_edited_parcel, validate_parcel_topology
+
+report = validate_parcel_topology(
+    {"P-1": parcel_1, "P-2": parcel_2},
+    source_crs="EPSG:32643",
+    coverage_boundary=project_boundary,
+)
+
+edit = validate_edited_parcel(
+    original_parcel,
+    edited_parcel,
+    parcel_id="P-1",
+    source_crs="EPSG:32643",
+    neighbouring_parcels={"P-2": parcel_2},
+    project_boundary=project_boundary,
+)
+```
+
+Projected areas use declared CRS unit conversions; geographic areas use geodesic calculations. Local/pixel geometry never receives invented real-world measurements. Reference comparison exposes area change, overlap/symmetric-difference area, and projected-CRS Hausdorff distance for review support; these are QA signals, not legal approval decisions.

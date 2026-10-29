@@ -1,0 +1,170 @@
+"""Public C.7 contracts for GeoAI jobs and draft parcel geometry history."""
+
+import uuid
+from datetime import datetime
+from typing import Any, Literal
+
+from pydantic import BaseModel, Field
+
+from app.schemas.common import PageMetadata
+
+
+GeoAIJobType = Literal["PARCEL_IMPORT", "PARCEL_DELINEATE", "BUILDING_VECTORIZE", "ROAD_VECTORIZE", "LAND_USE_VECTORIZE", "ROAD_IMPORT", "LAND_USE_IMPORT", "TOPOLOGY_VALIDATE"]
+GeoAIJobStatus = Literal["QUEUED", "PROCESSING", "COMPLETED", "FAILED", "CANCELLED"]
+
+
+class GeoAIJobCreateRequest(BaseModel):
+    job_type: GeoAIJobType
+    source_type: str
+    source_payload: dict[str, Any]
+    source_crs: str | None = Field(default=None, max_length=255)
+    source_reference: str | None = Field(default=None, max_length=1024)
+    model_version: str | None = Field(default=None, max_length=255)
+    imagery_asset_id: uuid.UUID | None = None
+    idempotency_key: str | None = Field(default=None, min_length=1, max_length=255)
+
+
+class GeoAIJobResponse(BaseModel):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    job_type: GeoAIJobType
+    status: GeoAIJobStatus
+    progress: int
+    has_error: bool
+    output_references: dict[str, Any]
+    created_at: datetime
+    updated_at: datetime
+
+
+class ImageryRegistrationRequest(BaseModel):
+    file_id: uuid.UUID
+    source_reference: str | None = Field(default=None, max_length=1024)
+
+
+class ImageryAssetResponse(BaseModel):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    # H.2 metadata-only demo imagery predates private-file-backed H.2B.1 uploads.
+    file_id: uuid.UUID | None
+    filename: str | None
+    source_reference: str | None
+    source_crs: str | None
+    coordinate_space: str
+    metadata: dict[str, Any]
+    registration_job_id: uuid.UUID | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ImageryAssetListResponse(BaseModel):
+    items: list[ImageryAssetResponse]
+    page: PageMetadata
+
+
+class ImageryPreviewResponse(BaseModel):
+    imagery_asset_id: uuid.UUID
+    preview_url: str
+    corners_wgs84: list[list[float]]
+    expires_in_seconds: int
+
+
+class ParcelVersionResponse(BaseModel):
+    id: uuid.UUID
+    version: int
+    geometry: dict[str, Any] | None
+    source: str
+    source_reference: str | None
+    coordinate_space: str
+    source_crs: str | None
+    area_m2: float | None
+    area_sqft: float | None
+    change_reason: str | None
+    validation_status: str | None
+    properties: dict[str, Any]
+    created_by_user_id: uuid.UUID | None
+    created_by_type: Literal["SYSTEM", "AI", "HUMAN", "IMPORT"]
+    processed_at: datetime | None
+    created_at: datetime
+
+
+class ParcelResponse(BaseModel):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    external_identifier: str | None
+    source: str
+    source_reference: str | None
+    status: str
+    verification_status: str
+    current_geometry_version: int
+    coordinate_space: str
+    source_crs: str | None
+    confidence: float | None
+    model_version: str | None
+    ai_boundary_status: str | None
+    requires_survey: bool
+    current_version: ParcelVersionResponse
+    created_at: datetime
+    updated_at: datetime
+
+
+class ParcelListResponse(BaseModel):
+    items: list[ParcelResponse]
+    page: PageMetadata
+
+
+class ParcelVersionListResponse(BaseModel):
+    items: list[ParcelVersionResponse]
+    page: PageMetadata
+
+
+class ParcelVersionCreateRequest(BaseModel):
+    geometry: dict[str, Any]
+    source_crs: str = Field(min_length=1, max_length=255)
+    coordinate_space: Literal["WORLD"] = "WORLD"
+    expected_current_version: int = Field(ge=1)
+    change_reason: str | None = Field(default=None, max_length=2000)
+
+
+class ParcelVersionCreateResponse(BaseModel):
+    version: ParcelVersionResponse
+    status: Literal["VALID", "REVIEW_REQUIRED"]
+    area_before_m2: float | None
+    area_after_m2: float | None
+    issues: list[dict[str, Any]]
+
+
+class GeoFeatureResponse(BaseModel):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    geometry: dict[str, Any]
+    source: str
+    source_reference: str | None
+    confidence: float | None
+    model_version: str | None
+    status: str
+    verification_status: str
+    processed_at: datetime | None
+    properties: dict[str, Any]
+
+
+class GeoFeatureListResponse(BaseModel):
+    items: list[GeoFeatureResponse]
+    page: PageMetadata
+
+
+class TopologyErrorResponse(BaseModel):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    parcel_id: uuid.UUID | None
+    related_parcel_id: uuid.UUID | None
+    code: str
+    severity: str
+    area_m2: float | None
+    message: str
+    resolved: bool
+    created_at: datetime
+
+
+class TopologyErrorListResponse(BaseModel):
+    items: list[TopologyErrorResponse]
+    page: PageMetadata
