@@ -14,8 +14,21 @@ from ai.document_ai.extraction.models import (
 from ai.document_ai.extraction.normalizers import normalize_field_value
 from ai.document_ai.models import BoundingBox, DocumentOcrResult, OcrPageResult, OcrRegion
 
-LLM_EXTRACTOR_VERSION = "ollama-qwen3-evidence-v1"
+LLM_EXTRACTOR_VERSION = "ollama-qwen3-evidence-v2"
 _DEFAULT_URL = "http://127.0.0.1:11434/api/generate"
+
+# Constrain the model response; OCR grounding below remains mandatory.
+_FIELD_ITEM_SCHEMA = {
+    "type": "object",
+    "properties": {"value": {"type": "string"}, "evidence": {"type": "string"}},
+    "required": ["value", "evidence"],
+    "additionalProperties": False,
+}
+_FIELD_RESPONSE_SCHEMA = {
+    "type": "object",
+    "properties": {name: _FIELD_ITEM_SCHEMA for name in CANONICAL_FIELD_NAMES},
+    "additionalProperties": False,
+}
 
 _PROMPT = """You extract land-record fields from OCR text. Return JSON only.
 Allowed keys: survey_number, khasra_number, khata_number, owner_details, plot_area,
@@ -66,10 +79,12 @@ class OllamaEvidenceExtractor:
 
     def _generate(self, text: str) -> dict[str, Any]:
         body = json.dumps({"model": self.model, "prompt": _PROMPT + text, "stream": False,
-                           "think": False, "format": "json", "options": {"temperature": 0}}).encode("utf-8")
+                           "think": False, "format": _FIELD_RESPONSE_SCHEMA, "options": {"temperature": 0, "num_predict": 2048, "num_ctx": 8192}}).encode("utf-8")
         request = urllib.request.Request(self.url, data=body, headers={"Content-Type": "application/json"})
         with urllib.request.urlopen(request, timeout=self.timeout) as response:
             outer = json.loads(response.read().decode("utf-8"))
+        if outer.get("done_reason") == "length":
+            raise ValueError("LLM extraction response exceeded its output limit.")
         parsed = json.loads(outer.get("response", "{}"))
         return parsed if isinstance(parsed, dict) else {}
 

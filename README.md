@@ -1,6 +1,6 @@
-# Intelligent Land Record Platform
+# Bhumi-AI | Intelligent Land Records & Urban Planning
 
-Phase A repository foundation for the combined SIH 12 urban cadastral mapping and SIH 18 land-record digitization platform. The approved architecture is documented in [`docs/team/00_MASTER_BLUEPRINT_v2.0.pdf`](docs/team/00_MASTER_BLUEPRINT_v2.0.pdf).
+This repository contains the full local-first application: document OCR, structured extraction and validation, role-based review, WebGIS parcel editing, building and road GeoAI, SegFormer land-use classification, GeoPackage interchange, and an offline synchronization API. It is the **working application**, not the deployment-only SIH judge demo. The architecture is documented in [`docs/team/00_MASTER_BLUEPRINT_v2.0.pdf`](docs/team/00_MASTER_BLUEPRINT_v2.0.pdf). See [`docs/INTEGRATION_STATUS.md`](docs/INTEGRATION_STATUS.md) for integrated modules, tests, and limitations.
 
 ## Prerequisites
 
@@ -41,7 +41,7 @@ After creating `.env`, start the local service foundation from the repository ro
 docker compose --env-file .env -f infrastructure/docker-compose.yml up --build
 ```
 
-This starts the frontend, FastAPI backend, Celery worker, PostgreSQL/PostGIS, Redis, and private MinIO service. Apply the database schema explicitly with Alembic as described below. Phase B provides backend authentication, RBAC, project isolation, private storage, and job persistence; OCR, GeoAI, GIS, and frontend application features remain outside this phase.
+This starts the frontend, FastAPI backend, Celery worker, PostgreSQL/PostGIS, Redis, and private MinIO service. Apply the database schema explicitly with Alembic as described below. GeoAI inference additionally requires local model checkpoints and, for supported GPU pipelines, a configured GPU worker. Model weights, private uploads and database records are intentionally not included in Git; see the configuration and model sections below.
 
 ### H.2B.1 imagery and GeoAI
 
